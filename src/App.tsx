@@ -263,49 +263,69 @@ function AppContent() {
                 <p className="text-gray-600">Check in or check out of the facility</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button
-                  onClick={handleCheckIn}
-                  className="flex flex-col items-center p-6 border-2 border-green-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Check In</h3>
-                  <p className="text-sm text-gray-600">Complete visitor registration and check-in process</p>
-                </button>
-                
-                <button
-                  onClick={handleCheckOut}
-                  className="flex flex-col items-center p-6 border-2 border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Check Out</h3>
-                  <p className="text-sm text-gray-600">Complete your visit and check out</p>
-                </button>
-              </div>
               
-              {/* Staff Login Section */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-4">Staff and administrators</p>
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    Staff Login
-                  </button>
-                </div>
+              
+
+
+ 
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-6 py-12">
+      {/* Optional: subtle background pattern */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-700" />
+      </div>
+
+      <div className="w-full max-w-2xl">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+          {/* Header */}
+          <div className="text-center pt-12 pb-8 px-8">
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Visitor Management
+            </h1>
+            <p className="text-xl text-gray-600">
+              Check in or check out of the facility
+            </p>
+          </div>
+
+          {/* Staff Login Card - BIG & BEAUTIFUL */}
+          <div className="px-12 pb-16">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
+              {/* Icon */}
+              <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
               </div>
+
+              {/* Title */}
+              <h2 className="text-3xl font-bold text-gray-900 mb-3">
+                Staff and Administrators
+              </h2>
+              <p className="text-gray-600 mb-10 text-lg">
+                Secure access to management dashboard
+              </p>
+
+              {/* BIG LOGIN BUTTON */}
+              <button
+                onClick={() => navigate('/login')}
+                className="group relative w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 
+                         text-white font-semibold text-xl py-6 px-10 rounded-2xl 
+                         shadow-xl hover:shadow-2xl transform hover:-translate-y-1 
+                         transition-all duration-300 flex items-center justify-center gap-4"
+              >
+                <span>Staff Login</span>
+                <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
+              </button>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gray-50 px-8 py-6 text-center">
+            <p className="text-sm text-gray-500">
+              Authorized personnel only • Secure system access
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  
             </div>
           </div>
         </main>

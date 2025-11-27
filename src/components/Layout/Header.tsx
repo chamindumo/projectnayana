@@ -1,5 +1,7 @@
-import React from 'react';
-import { Shield, Users, AlertTriangle, Settings, Clock, LogOut, User } from 'lucide-react';
+// src/components/Layout/Header.tsx
+
+import React, { useState, useEffect } from 'react';
+import { Shield, Users, AlertTriangle, Settings, Clock, LogOut, User, Home } from 'lucide-react';
 import { User as UserType } from '../../types';
 
 interface HeaderProps {
@@ -21,16 +23,27 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onLogout
 }) => {
-  const getCurrentTime = () => {
-    return new Date().toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })
+      );
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const getNavItems = () => {
     if (!currentUser) return [];
@@ -42,109 +55,124 @@ export const Header: React.FC<HeaderProps> = ({
           { id: 'admin', label: 'Admin Dashboard', icon: Shield },
           { id: 'reports', label: 'Reports', icon: Settings }
         ];
+      case 'front-desk':
+        return [
+          { id: 'front-desk', label: 'Dashboard', icon: Users },
+        ];
       case 'hierarchy-person':
         return [
           { id: 'hierarchy', label: 'Reports', icon: Settings }
         ];
-      case 'front-desk':
-        return [
-          { id: 'front-desk', label: 'Dashboard', icon: Users },
-          { id: 'visitor-checkin', label: 'Check In', icon: Shield }
-        ];
       default:
-        return [
-          { id: 'dashboard', label: 'Dashboard', icon: Users },
-          { id: 'checkin', label: 'Check In', icon: Shield },
-          { id: 'reports', label: 'Reports', icon: Settings }
-        ];
+        return [];
     }
   };
 
   const navItems = getNavItems();
 
   return (
-    <header className="bg-white shadow-sm border-b-2 border-blue-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo and Title */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center w-14 h-14 bg-white rounded-lg">
-              <img src="src/logo.jpg" alt="Nazareth Care Logo" className="w-12 h-12 object-contain" />
+    <header className="bg-white shadow-lg border-b-4 border-blue-600">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-4">
+
+          {/* Left: Logo + Title */}
+          <div className="flex items-center space-x-5">
+            <div className="flex-shrink-0">
+              <div className="w-16 h-16 bg-blue-700 rounded-full flex items-center justify-center shadow-xl">
+                <img 
+                  src="/logo.jpg" 
+                  alt="Nazareth Hospital" 
+                  className="w-14 h-14 rounded-full object-contain bg-white p-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = '<div class="text-white font-bold text-2xl">NH</div>';
+                  }}
+                />
+              </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Nazareth Hospital Visitor Management</h1>
-              <p className="text-sm text-gray-600">Secure Visitor System</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Nazareth Hospital
+              </h1>
+              <p className="text-lg text-blue-600 font-semibold">Visitor Management</p>
+              <p className="text-sm text-gray-500">Secure Visitor System</p>
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Center: Navigation */}
           {navItems.length > 0 && (
-            <nav className="hidden md:flex space-x-1">
+            <nav className="hidden lg:flex items-center space-x-2">
               {navItems.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => onViewChange(id)}
-                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-6 py-3 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 ${
                     currentView === id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
                   }`}
                 >
-                  <Icon className="w-5 h-5 mr-2" />
+                  <Icon className="w-6 h-6" />
                   {label}
                 </button>
               ))}
             </nav>
           )}
 
-          {/* Status and Emergency */}
+          {/* Right: Status Bar */}
           <div className="flex items-center space-x-4">
-            {/* User Info */}
+
+            {/* Staff Info */}
             {currentUser && (
-              <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
-                <User className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">
-                  {currentUser.firstName} {currentUser.lastName}
-                </span>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                  {currentUser.role.replace('-', ' ')}
-                </span>
+              <div className="hidden sm:flex items-center gap-3 bg-gradient-to-r from-blue-50 to-blue-100 px-5 py-3 rounded-xl shadow-md">
+                <User className="w-6 h-6 text-blue-700" />
+                <div>
+                  <div className="font-bold text-blue-900">
+                    {currentUser.firstName} {currentUser.lastName}
+                  </div>
+                  <div className="text-xs text-blue-600 uppercase tracking-wider">
+                    {currentUser.role.replace(/-/g, ' ')}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Active Visitors Count */}
-            <div className="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
-              <Users className="w-5 h-5 text-green-600" />
-              <span className="font-semibold text-green-700">{activeVisitorCount} Active</span>
+            {/* Active Visitors */}
+            <div className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl font-bold text-xl">
+              <Users className="w-8 h-8" />
+              <div>
+                <div className="text-3xl">{activeVisitorCount}</div>
+                <div className="text-sm opacity-90">Active</div>
+              </div>
             </div>
 
             {/* Current Time */}
-            <div className="hidden lg:flex items-center space-x-2 text-gray-600">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">{getCurrentTime()}</span>
+            <div className="hidden md:flex flex-col text-right">
+              <div className="text-sm text-gray-500 font-medium">Current Time</div>
+              <div className="text-lg font-bold text-gray-800">{currentTime}</div>
             </div>
 
             {/* Emergency Button */}
             <button
               onClick={onEmergencyToggle}
-              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-all ${
+              className={`flex items-center gap-3 px-6 py-4 rounded-xl font-bold text-lg shadow-2xl transition-all transform hover:scale-110 ${
                 emergencyMode
-                  ? 'bg-red-600 text-white shadow-lg animate-pulse'
-                  : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                  ? 'bg-red-600 text-white animate-pulse ring-4 ring-red-300'
+                  : 'bg-red-50 text-red-700 hover:bg-red-100 border-2 border-red-300'
               }`}
             >
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              {emergencyMode ? 'Emergency Active' : 'Emergency Mode'}
+              <AlertTriangle className="w-7 h-7" />
+              {emergencyMode ? 'EMERGENCY ACTIVE' : 'Emergency Mode'}
             </button>
 
-            {/* Logout Button */}
-            {currentUser && onLogout && (
+            {/* Logout */}
+            {onLogout && (
               <button
                 onClick={onLogout}
-                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all hover:scale-110 shadow-md"
                 title="Logout"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-6 h-6 text-gray-700" />
               </button>
             )}
           </div>
@@ -152,20 +180,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Mobile Navigation */}
         {navItems.length > 0 && (
-          <div className="md:hidden border-t border-gray-200 pt-4 pb-2">
-            <div className="flex space-x-1">
+          <div className="lg:hidden pb-4 border-t border-gray-200 pt-4">
+            <div className="grid grid-cols-2 gap-3">
               {navItems.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => onViewChange(id)}
-                  className={`flex-1 flex flex-col items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex flex-col items-center gap-2 px-4 py-4 rounded-xl font-bold transition-all ${
                     currentView === id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-blue-600 text-white shadow-xl'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
                   }`}
                 >
-                  <Icon className="w-5 h-5 mb-1" />
-                  {label}
+                  <Icon className="w-8 h-8" />
+                  <span className="text-sm">{label}</span>
                 </button>
               ))}
             </div>

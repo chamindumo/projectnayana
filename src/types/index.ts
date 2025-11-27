@@ -1,4 +1,7 @@
 export interface Visitor {
+  roomNumber: string;
+  phoneNumber: ReactNode;
+  fullName: any;
   id: string;
   visitorIdNumber: string; // Unique ID number for the visitor
   firstName: string;
