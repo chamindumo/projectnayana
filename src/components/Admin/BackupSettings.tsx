@@ -61,7 +61,7 @@ export const BackupSettings: React.FC = () => {
             </div>
 
             <p className="text-sm text-gray-500 mb-6">
-                Configure automated backups to Google Drive. The system will automatically backup visitor data at the beginning of every hour if this device is active.
+                Configure automated backups to Google Drive. The system will automatically backup visitor data if more than 1 hour has passed since the last backup.
             </p>
 
             {error && (

@@ -59,34 +59,37 @@ function AppContent() {
   useEffect(() => {
     const checkBackupSchedule = async () => {
       const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
+      // Check if it's time for a backup (every 60 minutes)
+      const lastAutoBackupTimestamp = localStorage.getItem('last_auto_backup_timestamp');
+      const ONE_HOUR_MS = 60 * 60 * 1000;
 
-      // Check every hour (at the top of the hour, with 5 min window)
-      if (minutes >= 0 && minutes < 5) {
-        const currentHourKey = `${now.toDateString()}-${hours}`;
-        const lastAutoBackup = localStorage.getItem('last_auto_backup_hour');
+      let shouldBackup = false;
+      if (!lastAutoBackupTimestamp) {
+        shouldBackup = true;
+      } else {
+        const timeSinceLast = now.getTime() - parseInt(lastAutoBackupTimestamp, 10);
+        if (timeSinceLast > ONE_HOUR_MS) {
+          shouldBackup = true;
+        }
+      }
 
-        if (lastAutoBackup !== currentHourKey) {
-          console.log('Checking automated backup schedule (Hourly)...');
-          try {
-            const storedClientId = googleDriveService.getClientId();
+      if (shouldBackup) {
+        console.log('Checking automated backup schedule (Interval > 1hr)...');
+        try {
+          const storedClientId = googleDriveService.getClientId();
 
-            if (storedClientId) {
-              if (googleDriveService.isTokenValid()) {
-                console.log('Token valid, starting automated backup...');
-                await googleDriveService.createBackup();
-                localStorage.setItem('last_auto_backup_hour', currentHourKey);
-                console.log('Automated backup completed.');
-              } else {
-                console.warn('Automated backup skipped: Google Drive session expired. Please open the dashboard to reconnect.');
-              }
+          if (storedClientId) {
+            if (googleDriveService.isTokenValid()) {
+              console.log('Token valid, starting automated backup...');
+              await googleDriveService.createBackup();
+              localStorage.setItem('last_auto_backup_timestamp', now.getTime().toString());
+              console.log('Automated backup completed.');
             } else {
-              console.log('Automated backup skipped: Google Drive not yet configured.');
+              console.warn('Automated backup skipped: Google Drive session expired.');
             }
-          } catch (e) {
-            console.error('Automated backup failed:', e);
           }
+        } catch (e) {
+          console.error('Automated backup failed:', e);
         }
       }
     };
