@@ -5,6 +5,7 @@ import { authService } from '../../services/authService';
 import { CreateUserModal } from './CreateUserModal';
 import { EditUserModal } from './EditUserModal';
 import { printService, PrintData } from '../../services/printService';
+import { BackupSettings } from './BackupSettings';
 
 interface AdminDashboardProps {
   currentUser: User;
@@ -56,7 +57,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    
+
     try {
       await authService.deleteUser(userId);
       loadUsers();
@@ -184,6 +185,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
             </div>
           </div>
         )}
+
+        {/* Backup Settings */}
+        <BackupSettings />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -345,9 +349,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onL
                         {user.department || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>

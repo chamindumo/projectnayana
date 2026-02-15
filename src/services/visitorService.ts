@@ -1,20 +1,19 @@
 // src/services/visitorService.ts
 
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  getDoc,
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  getDocs,
+  query,
+  where,
+  orderBy,
   onSnapshot,
-  Timestamp 
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Visitor, HealthScreening, AuditLog } from '../types';
+import { Visitor, HealthScreening } from '../types';
 import {
   startOfDay as dateFnsStartOfDay,
   endOfDay as dateFnsEndOfDay,
@@ -134,7 +133,7 @@ export class VisitorService {
         .sort((a, b) => (b.checkInTime?.getTime() || 0) - (a.checkInTime?.getTime() || 0));
     }
   }
-  
+
   // ──────────────────────────────────────────────────────────────
   // Check-out
   // ──────────────────────────────────────────────────────────────
@@ -180,58 +179,58 @@ export class VisitorService {
     }
   }
 
-  
+
 
   // ──────────────────────────────────────────────────────────────
   // Get All Visitors from Today (for stats)
   // ──────────────────────────────────────────────────────────────
- async getTodayVisitors(): Promise<Visitor[]> {
-  try {
-    // Start of today (00:00:00.000)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+  async getTodayVisitors(): Promise<Visitor[]> {
+    try {
+      // Start of today (00:00:00.000)
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    // Try efficient indexed query first
-    const q = query(
-      this.visitorsCollection,
-  
-      orderBy('checkInTime', 'desc')
-    );
+      // Try efficient indexed query first
+      const q = query(
+        this.visitorsCollection,
 
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => this.mapDocToVisitor(doc));
+        orderBy('checkInTime', 'desc')
+      );
 
-  } catch (error: any) {
-    if (error.code === 'failed-precondition') {
-      console.warn('Composite index missing. Falling back to client-side filtering...');
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => this.mapDocToVisitor(doc));
 
-      // Fallback: Get ALL visitors and filter locally
-      const allSnapshot = await getDocs(this.visitorsCollection);
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+    } catch (error: any) {
+      if (error.code === 'failed-precondition') {
+        console.warn('Composite index missing. Falling back to client-side filtering...');
 
-      const todayVisitors = allSnapshot.docs
-        .map(doc => this.mapDocToVisitor(doc))
-        .filter(visitor => {
-          if (!visitor.checkInTime) return false;
-          return visitor.checkInTime >= todayStart;
-        })
-        .sort((a, b) => {
-          const timeA = a.checkInTime?.getTime() || 0;
-          const timeB = b.checkInTime?.getTime() || 0;
-          return timeB - timeA; // newest first
-        });
+        // Fallback: Get ALL visitors and filter locally
+        const allSnapshot = await getDocs(this.visitorsCollection);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-      return todayVisitors;
+        const todayVisitors = allSnapshot.docs
+          .map(doc => this.mapDocToVisitor(doc))
+          .filter(visitor => {
+            if (!visitor.checkInTime) return false;
+            return visitor.checkInTime >= todayStart;
+          })
+          .sort((a, b) => {
+            const timeA = a.checkInTime?.getTime() || 0;
+            const timeB = b.checkInTime?.getTime() || 0;
+            return timeB - timeA; // newest first
+          });
+
+        return todayVisitors;
+      }
+
+      console.error('getTodayVisitors error:', error);
+      return [];
     }
-
-    console.error('getTodayVisitors error:', error);
-    return [];
   }
-}
   // ──────────────────────────────────────────────────────────────
   // Real-time subscription to active visitors
   // ──────────────────────────────────────────────────────────────
@@ -326,7 +325,35 @@ export class VisitorService {
       await updateDoc(testRef, { test: false });
       return { success: true, message: 'Database OK' };
     } catch (e: any) {
+      console.error('testDatabaseConnection error:', e);
       return { success: false, message: e.message };
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Get ALL Visitors (for backup)
+  // ──────────────────────────────────────────────────────────────
+  async getAllVisitors(): Promise<Visitor[]> {
+    try {
+      const snapshot = await getDocs(this.visitorsCollection);
+      return snapshot.docs.map(doc => this.mapDocToVisitor(doc));
+    } catch (error) {
+      console.error('getAllVisitors error:', error);
+      return [];
+    }
+  }
+
+  async getAllAuditLogs(): Promise<any[]> {
+    try {
+      const snapshot = await getDocs(this.auditCollection);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate() || null
+      }));
+    } catch (error) {
+      console.error('getAllAuditLogs error:', error);
+      return [];
     }
   }
 }

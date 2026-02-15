@@ -11,6 +11,7 @@ import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { FrontDeskDashboard } from './components/FrontDesk/FrontDeskDashboard';
 import { visitorService } from './services/visitorService';
 import { authService } from './services/authService';
+import { googleDriveService } from './services/googleDriveService';
 import { User, Visitor } from './types';
 
 function AppContent() {
@@ -28,7 +29,7 @@ function AppContent() {
       try {
         // Wait a bit for Firebase to initialize and default users to be created
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         const user = await authService.getCurrentUser();
         if (user) {
           setCurrentUser(user);
@@ -42,7 +43,7 @@ function AppContent() {
         console.error('Error initializing auth:', error);
       }
     };
-    
+
     initializeAuth();
   }, [location.pathname, navigate]);
 
@@ -52,6 +53,51 @@ function AppContent() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Automated Backup Logic
+  useEffect(() => {
+    const checkBackupSchedule = async () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+
+      // Check every hour (at the top of the hour, with 5 min window)
+      if (minutes >= 0 && minutes < 5) {
+        const currentHourKey = `${now.toDateString()}-${hours}`;
+        const lastAutoBackup = localStorage.getItem('last_auto_backup_hour');
+
+        if (lastAutoBackup !== currentHourKey) {
+          console.log('Checking automated backup schedule (Hourly)...');
+          try {
+            const storedClientId = googleDriveService.getClientId();
+
+            if (storedClientId) {
+              if (googleDriveService.isTokenValid()) {
+                console.log('Token valid, starting automated backup...');
+                await googleDriveService.createBackup();
+                localStorage.setItem('last_auto_backup_hour', currentHourKey);
+                console.log('Automated backup completed.');
+              } else {
+                console.warn('Automated backup skipped: Google Drive session expired. Please open the dashboard to reconnect.');
+              }
+            } else {
+              console.log('Automated backup skipped: Google Drive not yet configured.');
+            }
+          } catch (e) {
+            console.error('Automated backup failed:', e);
+          }
+        }
+      }
+    };
+
+    // Check every minute
+    const intervalId = setInterval(checkBackupSchedule, 60000);
+
+    // Initial check
+    checkBackupSchedule();
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const getDefaultPathForUser = (user: User): string => {
@@ -123,18 +169,18 @@ function AppContent() {
     if (!currentUser) {
       return <Navigate to="/login" replace />;
     }
-    
+
     if (requiredRole && currentUser.role !== requiredRole && currentUser.role !== 'super-admin') {
       return <Navigate to="/" replace />;
     }
-    
+
     return <>{children}</>;
   };
 
   // Login Component
   const LoginPage = () => (
-    <Login 
-      onLoginSuccess={handleLoginSuccess} 
+    <Login
+      onLoginSuccess={handleLoginSuccess}
       onBackToCheckIn={() => navigate('/')}
       onNavigateToSignup={() => navigate('/signup')}
     />
@@ -158,14 +204,14 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50">
         <Header
           currentView="front-desk"
-          onViewChange={() => {}}
+          onViewChange={() => { }}
           emergencyMode={emergencyMode}
           onEmergencyToggle={handleEmergencyToggle}
           activeVisitorCount={activeVisitorCount}
           currentUser={currentUser!}
           onLogout={handleLogout}
         />
-        
+
         <main className="py-6">
           <FrontDeskDashboard
             onCheckInClick={() => navigate('/')}
@@ -183,14 +229,14 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50">
         <Header
           currentView="hierarchy"
-          onViewChange={() => {}}
+          onViewChange={() => { }}
           emergencyMode={emergencyMode}
           onEmergencyToggle={handleEmergencyToggle}
           activeVisitorCount={activeVisitorCount}
           currentUser={currentUser!}
           onLogout={handleLogout}
         />
-        
+
         <main className="py-6">
           <Reports />
         </main>
@@ -205,14 +251,14 @@ function AppContent() {
         <div className="min-h-screen bg-gray-50">
           <Header
             currentView="checkin"
-            onViewChange={() => {}}
+            onViewChange={() => { }}
             emergencyMode={emergencyMode}
             onEmergencyToggle={handleEmergencyToggle}
             activeVisitorCount={activeVisitorCount}
             currentUser={currentUser}
             onLogout={handleLogout}
           />
-          
+
           <main className="py-6">
             <CheckInFlow
               onComplete={handleCheckInComplete}
@@ -228,14 +274,14 @@ function AppContent() {
         <div className="min-h-screen bg-gray-50">
           <Header
             currentView="checkout"
-            onViewChange={() => {}}
+            onViewChange={() => { }}
             emergencyMode={emergencyMode}
             onEmergencyToggle={handleEmergencyToggle}
             activeVisitorCount={activeVisitorCount}
             currentUser={currentUser}
             onLogout={handleLogout}
           />
-          
+
           <main className="py-6">
             <CheckOutFlow onComplete={() => setCheckInMode(null)} />
           </main>
@@ -247,14 +293,14 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50">
         <Header
           currentView="visitor-checkin"
-          onViewChange={() => {}}
+          onViewChange={() => { }}
           emergencyMode={emergencyMode}
           onEmergencyToggle={handleEmergencyToggle}
           activeVisitorCount={activeVisitorCount}
           currentUser={currentUser}
           onLogout={handleLogout}
         />
-        
+
         <main className="py-6">
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8">
@@ -262,70 +308,70 @@ function AppContent() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">Visitor Management</h2>
                 <p className="text-gray-600">Check in or check out of the facility</p>
               </div>
-              
-              
-              
 
 
- 
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-6 py-12">
-      {/* Optional: subtle background pattern */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-700" />
-      </div>
 
-      <div className="w-full max-w-2xl">
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          {/* Header */}
-          <div className="text-center pt-12 pb-8 px-8">
-            <h1 className="text-5xl font-bold text-gray-900 mb-4">
-              Visitor Management
-            </h1>
-            <p className="text-xl text-gray-600">
-              Check in or check out of the facility
-            </p>
-          </div>
 
-          {/* Staff Login Card - BIG & BEAUTIFUL */}
-          <div className="px-12 pb-16">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
-              {/* Icon */}
-              <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
-              </div>
 
-              {/* Title */}
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">
-                Staff and Administrators
-              </h2>
-              <p className="text-gray-600 mb-10 text-lg">
-                Secure access to management dashboard
-              </p>
 
-              {/* BIG LOGIN BUTTON */}
-              <button
-                onClick={() => navigate('/login')}
-                className="group relative w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-6 py-12">
+                {/* Optional: subtle background pattern */}
+                <div className="absolute inset-0 -z-10 overflow-hidden">
+                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+                  <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-700" />
+                </div>
+
+                <div className="w-full max-w-2xl">
+                  <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+                    {/* Header */}
+                    <div className="text-center pt-12 pb-8 px-8">
+                      <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                        Visitor Management
+                      </h1>
+                      <p className="text-xl text-gray-600">
+                        Check in or check out of the facility
+                      </p>
+                    </div>
+
+                    {/* Staff Login Card - BIG & BEAUTIFUL */}
+                    <div className="px-12 pb-16">
+                      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
+                        {/* Icon */}
+                        <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+                          Staff and Administrators
+                        </h2>
+                        <p className="text-gray-600 mb-10 text-lg">
+                          Secure access to management dashboard
+                        </p>
+
+                        {/* BIG LOGIN BUTTON */}
+                        <button
+                          onClick={() => navigate('/login')}
+                          className="group relative w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 
                          text-white font-semibold text-xl py-6 px-10 rounded-2xl 
                          shadow-xl hover:shadow-2xl transform hover:-translate-y-1 
                          transition-all duration-300 flex items-center justify-center gap-4"
-              >
-                <span>Staff Login</span>
-                <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
-              </button>
-            </div>
-          </div>
+                        >
+                          <span>Staff Login</span>
+                          <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-20 transition-opacity" />
+                        </button>
+                      </div>
+                    </div>
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-8 py-6 text-center">
-            <p className="text-sm text-gray-500">
-              Authorized personnel only • Secure system access
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  
+                    {/* Footer */}
+                    <div className="bg-gray-50 px-8 py-6 text-center">
+                      <p className="text-sm text-gray-500">
+                        Authorized personnel only • Secure system access
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </main>

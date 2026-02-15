@@ -1,13 +1,14 @@
 // src/components/FrontDesk/FrontDeskDashboard.tsx
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Users, Clock, LogOut, Search, AlertTriangle, UserPlus, Download, 
-  Calendar, CheckSquare, Square, Trash2 
+import {
+  Users, Clock, LogOut, Search, AlertTriangle, UserPlus, Download,
+  Calendar, CheckSquare, Square, Trash2, Cloud
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
+import { googleDriveService } from '../../services/googleDriveService';
 import { Visitor } from '../../types';
 import { visitorService } from '../../services/visitorService';
 
@@ -45,7 +46,7 @@ const exportToExcel = (visitors: Visitor[], filename: string = 'Visitors_Report'
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}_${new Date().toISOString().slice(0,10)}.csv`);
+  link.setAttribute('download', `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
@@ -69,7 +70,7 @@ export const FrontDeskDashboard: React.FC<FrontDeskDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(startOfDay(new Date()));
   const [endDate, setEndDate] = useState<Date | null>(endOfDay(new Date()));
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
@@ -111,7 +112,7 @@ export const FrontDeskDashboard: React.FC<FrontDeskDashboardProps> = ({
   const displayedVisitors = useMemo(() => {
     const search = searchTerm.toLowerCase();
     return filteredByDate
-      .filter(visitor => 
+      .filter(visitor =>
         visitor.fullName?.toLowerCase().includes(search) ||
         visitor.phoneNumber?.includes(search) ||
         visitor.residentName?.toLowerCase().includes(search) ||
@@ -324,6 +325,21 @@ export const FrontDeskDashboard: React.FC<FrontDeskDashboardProps> = ({
 
           <div className="flex gap-4">
             <button
+              onClick={async () => {
+                try {
+                  await googleDriveService.ensureAuthorized();
+                  await googleDriveService.createBackup();
+                  alert('Backup successful! File saved to Google Drive.');
+                } catch (err: any) {
+                  alert('Backup failed: ' + (err.message || 'Unknown error'));
+                }
+              }}
+              className="flex items-center gap-4 px-10 py-5 rounded-2xl font-bold text-xl shadow-xl bg-blue-600 hover:bg-blue-700 text-white transition-all hover:scale-105"
+            >
+              <Cloud className="w-8 h-8" />
+              Backup to Drive
+            </button>
+            <button
               onClick={() => exportToExcel(displayedVisitors, `Visitors_${dateRangeText.replace(/ /g, '_')}`)}
               className="flex items-center gap-4 px-10 py-5 rounded-2xl font-bold text-xl shadow-xl bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105"
             >
@@ -424,11 +440,10 @@ export const FrontDeskDashboard: React.FC<FrontDeskDashboardProps> = ({
                           {visitor.checkOutTime ? format(visitor.checkOutTime, 'h:mm a') : '—'}
                         </td>
                         <td className="px-6 py-6">
-                          <span className={`inline-block px-5 py-2 rounded-full font-bold text-lg ${
-                            isCheckedIn 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span className={`inline-block px-5 py-2 rounded-full font-bold text-lg ${isCheckedIn
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-700'
+                            }`}>
                             {isCheckedIn ? 'Checked In' : 'Checked Out'}
                           </span>
                         </td>
